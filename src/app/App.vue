@@ -8,7 +8,12 @@ import {
   Leaf,
 } from "lucide-vue-next";
 import { createDocument } from "../shared/document";
-import { PaperPanel, papers, replacePaper } from "../features/paper";
+import {
+  PaperPanel,
+  OutlineWizard,
+  papers,
+  replacePaper,
+} from "../features/paper";
 import {
   CreasePanel,
   selectCrease,
@@ -36,10 +41,18 @@ const pose = computed(() => solvePose(doc.paper, doc.angles)),
   hinges = computed(() => hingePositions(doc.paper, pose.value));
 const { toggle } = usePlayer(doc);
 const help = ref(false),
-  toast = ref("");
+  toast = ref(""),
+  outlineOpen = ref(false);
 function notify(s: string) {
   toast.value = s;
   setTimeout(() => (toast.value = ""), 2400);
+}
+function openOutline() {
+  outlineOpen.value = true;
+}
+function onOutlineApplied(message: string) {
+  outlineOpen.value = false;
+  notify(message);
 }
 function choosePaper(id: string) {
   const p = papers.find((p) => p.id === id);
@@ -94,7 +107,11 @@ function capture() {
       </div>
       <div class="studio">
         <aside class="left-sidebar">
-          <PaperPanel :doc="doc" @paper="choosePaper" /><CreasePanel
+          <PaperPanel
+            :doc="doc"
+            @paper="choosePaper"
+            @outline="openOutline"
+          /><CreasePanel
             :doc="doc"
             @select="selectCrease(doc, $event)"
           />
@@ -163,6 +180,12 @@ function capture() {
       </footer>
     </main>
     <div v-if="toast" role="status" class="toast">✓ {{ toast }}</div>
+    <OutlineWizard
+      v-if="outlineOpen"
+      :doc="doc"
+      @close="outlineOpen = false"
+      @applied="onOutlineApplied"
+    />
     <div v-if="help" class="modal-backdrop" @click.self="help = false">
       <section class="help-modal">
         <button class="close" @click="help = false">×</button>
